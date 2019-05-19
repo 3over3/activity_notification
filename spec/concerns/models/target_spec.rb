@@ -614,13 +614,18 @@ shared_examples_for :target do
 
         context 'with custom_filter options' do
           it "returns filtered notifications only" do
-            if ActivityNotification.config.orm == :active_record
-              options = { custom_filter: ["notifications.key = ?", @key] }
-              expect(test_instance.notification_index(options)[0]).to eq(@notification3)
-              expect(test_instance.notification_index(options).size).to eq(1)
-            end
-
             options = { custom_filter: { key: @key } }
+            expect(test_instance.notification_index(options)[0]).to eq(@notification3)
+            expect(test_instance.notification_index(options).size).to eq(1)
+          end
+
+          it "returns filtered notifications only with filter depending on ORM" do
+            options =
+              case ActivityNotification.config.orm
+              when :active_record then { custom_filter: ["notifications.key = ?", @key] }
+              when :mongoid       then { custom_filter: {:key => @key} }
+              when :dynamoid      then { custom_filter: {'key.eq': @key} }
+              end
             expect(test_instance.notification_index(options)[0]).to eq(@notification3)
             expect(test_instance.notification_index(options).size).to eq(1)
           end
